@@ -10,65 +10,32 @@
         body { 
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; 
             background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); 
-            display: flex; 
-            justify-content: center; 
-            padding: 20px; 
-            min-height: 100vh;
-            margin: 0;
+            display: flex; justify-content: center; padding: 20px; min-height: 100vh; margin: 0;
         }
         .container { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 20px; 
-            width: 100%; 
-            max-width: 450px; 
+            background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 450px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
         }
         h2 { color: var(--main-color); text-align: center; margin-bottom: 25px; }
         .form-group { margin-bottom: 15px; }
         input, textarea { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #eee; 
-            border-radius: 10px; 
-            box-sizing: border-box; 
-            font-size: 14px; 
-            outline: none; 
+            width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 10px; 
+            box-sizing: border-box; font-size: 14px; outline: none; 
         }
-        input:focus { border-color: var(--main-color); }
         button { 
-            width: 100%; 
-            padding: 15px; 
-            background: var(--main-color); 
-            color: white; 
-            border: none; 
-            border-radius: 30px; 
-            font-size: 16px; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            margin-top: 10px; 
+            width: 100%; padding: 15px; background: var(--main-color); color: white; 
+            border: none; border-radius: 30px; font-size: 16px; cursor: pointer; transition: 0.3s; 
         }
-        button:hover { background: #ff5252; box-shadow: 0 5px 15px rgba(255,138,128,0.4); }
+        button:hover { background: #ff5252; }
         .list-title { margin-top: 40px; border-bottom: 2px solid #eee; padding-bottom: 10px; color: #666; }
         .item { padding: 20px 0; border-bottom: 1px solid #f9f9f9; }
         .locked-box { 
-            background: #fff5f5; 
-            border: 1px dashed #ff8a80; 
-            padding: 15px; 
-            border-radius: 10px; 
-            text-align: center; 
-            color: #ff8a80; 
-            font-size: 14px;
-            margin-top: 10px;
+            background: #fff5f5; border: 1px dashed #ff8a80; padding: 15px; 
+            border-radius: 10px; text-align: center; color: #ff8a80; font-size: 14px;
         }
         .content-text { 
-            color: #444; 
-            line-height: 1.6; 
-            background: #f9f9f9; 
-            padding: 15px; 
-            border-radius: 10px; 
-            margin-top: 10px;
-            word-wrap: break-word;
+            color: #444; background: #f9f9f9; padding: 15px; border-radius: 10px; 
+            line-height: 1.6; word-wrap: break-word;
         }
     </style>
 </head>
@@ -76,30 +43,22 @@
 
 <div class="container">
     <h2>⏳ 爱情时光胶囊</h2>
-    
-    <div class="form-group">
-        <input type="text" id="author" placeholder="你的名字">
-    </div>
-    <div class="form-group">
-        <textarea id="content" rows="4" placeholder="写下现在的感受，只有在未来选定的日子才能开启..."></textarea>
-    </div>
+    <div class="form-group"><input type="text" id="author" placeholder="你的名字"></div>
+    <div class="form-group"><textarea id="content" rows="4" placeholder="写下现在的感受..."></textarea></div>
     <div class="form-group">
         <label style="font-size: 12px; color: #999;">解锁日期：</label>
         <input type="date" id="unlockDate">
     </div>
-    <button onclick="saveToCloud()">埋下这颗胶囊</button>
-
+    <button id="submitBtn">埋下这颗胶囊</button>
     <h3 class="list-title">时光长廊</h3>
-    <div id="capsuleList">
-        <p style="text-align: center; color: #ccc;">正在从星空云端加载记忆...</p>
-    </div>
+    <div id="capsuleList"><p style="text-align: center; color: #ccc;">正在从星空云端加载记忆...</p></div>
 </div>
 
 <script>
-    // 1. 初始化 LeanCloud 国际版
+    // 1. 初始化 - 严格使用英文标点
     AV.init({
-        appId: "FZfmoWWCrfz2C7AesGbQalGm-MdYXbMMI",
-        appKey: "eueAA1VEsN9yTAbCxm2Xutus",
+        appId: "FZfmoWWCrfz2C7AesGbQaLGm-MdYxbMMI",
+        appKey: "eueAA1VESN9yTAbCxm2Xutus",
         serverURL: "https://fzfmowwc.api.lncldglobal.com"
     });
 
@@ -112,9 +71,13 @@
         const unlockDate = document.getElementById('unlockDate').value;
 
         if(!author || !content || !unlockDate) {
-            alert("要把信息填完整，记忆才不会散落哦！");
+            alert("要把信息填完整哦！");
             return;
         }
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerText = "正在埋入...";
 
         const newCapsule = new Capsule();
         newCapsule.set('author', author);
@@ -125,10 +88,13 @@
             await newCapsule.save();
             alert("胶囊已成功埋入云端！");
             document.getElementById('content').value = '';
-            fetchCapsules(); // 成功后刷新列表
+            fetchCapsules();
         } catch (error) {
-            console.error("保存报错:", error);
-            alert("保存失败，请检查 LeanCloud 控制台的安全域名设置。");
+            console.error(error);
+            alert("保存失败: " + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "埋下这颗胶囊";
         }
     }
 
@@ -140,24 +106,20 @@
         
         try {
             const results = await query.find();
-            // 获取今天的日期 (YYYY-MM-DD 格式)
             const now = new Date();
             const today = now.getFullYear() + "-" + 
                           String(now.getMonth() + 1).padStart(2, '0') + "-" + 
                           String(now.getDate()).padStart(2, '0');
 
             list.innerHTML = "";
-
             if (results.length === 0) {
-                list.innerHTML = "<p style='text-align:center; color:#999;'>这里还没有记忆，快去写下第一条吧！</p>";
+                list.innerHTML = "<p style='text-align:center; color:#999;'>还没有记忆，快去写下第一条吧！</p>";
                 return;
             }
 
             results.forEach(item => {
                 const data = item.attributes;
-                // 比较日期
                 const isLocked = today < data.unlockDate;
-                
                 const div = document.createElement('div');
                 div.className = 'item';
                 div.innerHTML = `
@@ -166,18 +128,17 @@
                         <span style="font-size: 12px; color: #999; float: right;">解锁日: ${data.unlockDate}</span>
                     </div>
                     ${isLocked ? 
-                        `<div class="locked-box">🔒 这是一个未来的秘密，请等到 ${data.unlockDate} 再来</div>` : 
+                        `<div class="locked-box">🔒 秘密酿造中...等到 ${data.unlockDate} 再来吧</div>` : 
                         `<div class="content-text">${data.content}</div>`}
                 `;
                 list.appendChild(div);
             });
         } catch (error) {
-            console.error("读取报错:", error);
-            list.innerHTML = "<p style='text-align:center; color:red;'>加载失败，请检查网络或控制台报错。</p>";
+            list.innerHTML = "<p style='text-align:center; color:red;'>加载失败: " + error.message + "</p>";
         }
     }
 
-    // 执行初始化加载
+    document.getElementById('submitBtn').addEventListener('click', saveToCloud);
     fetchCapsules();
 </script>
 </body>
