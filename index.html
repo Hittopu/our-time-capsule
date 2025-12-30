@@ -6,56 +6,32 @@
     <title>我们的时光胶囊 ⏳</title>
     <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.12.0/dist/av-min.js"></script>
     <style>
-        :root { --main-color: #ff8a80; --bg-color: #f5f5f5; }
-        body { 
-            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; 
-            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); 
-            display: flex; justify-content: center; padding: 20px; min-height: 100vh; margin: 0;
-        }
-        .container { 
-            background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 450px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-        }
-        h2 { color: var(--main-color); text-align: center; margin-bottom: 25px; }
-        .form-group { margin-bottom: 15px; }
-        input, textarea { 
-            width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 10px; 
-            box-sizing: border-box; font-size: 14px; outline: none; 
-        }
-        button { 
-            width: 100%; padding: 15px; background: var(--main-color); color: white; 
-            border: none; border-radius: 30px; font-size: 16px; cursor: pointer; transition: 0.3s; 
-        }
-        button:hover { background: #ff5252; }
-        .list-title { margin-top: 40px; border-bottom: 2px solid #eee; padding-bottom: 10px; color: #666; }
-        .item { padding: 20px 0; border-bottom: 1px solid #f9f9f9; }
-        .locked-box { 
-            background: #fff5f5; border: 1px dashed #ff8a80; padding: 15px; 
-            border-radius: 10px; text-align: center; color: #ff8a80; font-size: 14px;
-        }
-        .content-text { 
-            color: #444; background: #f9f9f9; padding: 15px; border-radius: 10px; 
-            line-height: 1.6; word-wrap: break-word;
-        }
+        :root { --main-color: #ff8a80; }
+        body { font-family: sans-serif; background: #f5f5f5; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 450px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: var(--main-color); text-align: center; }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #eee; border-radius: 10px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: var(--main-color); color: white; border: none; border-radius: 30px; cursor: pointer; font-size: 16px; }
+        .item { padding: 15px; border-bottom: 1px solid #f9f9f9; margin-top: 10px; }
+        .locked-box { background: #fff5f5; border: 1px dashed #ff8a80; padding: 10px; border-radius: 10px; text-align: center; color: #ff8a80; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>⏳ 爱情时光胶囊</h2>
-    <div class="form-group"><input type="text" id="author" placeholder="你的名字"></div>
-    <div class="form-group"><textarea id="content" rows="4" placeholder="写下现在的感受..."></textarea></div>
-    <div class="form-group">
-        <label style="font-size: 12px; color: #999;">解锁日期：</label>
-        <input type="date" id="unlockDate">
+    <input type="text" id="author" placeholder="你的名字">
+    <textarea id="content" rows="4" placeholder="写下现在的感受..."></textarea>
+    <input type="date" id="unlockDate">
+    <button onclick="saveToCloud()">埋下这颗胶囊</button>
+
+    <div id="capsuleList" style="margin-top: 20px;">
+        <p style="text-align: center; color: #ccc;">正在同步记忆...</p>
     </div>
-    <button id="submitBtn">埋下这颗胶囊</button>
-    <h3 class="list-title">时光长廊</h3>
-    <div id="capsuleList"><p style="text-align: center; color: #ccc;">正在从星空云端加载记忆...</p></div>
 </div>
 
 <script>
-    // 1. 初始化 - 严格使用英文标点
+    // 使用你图片中的国际版凭证，确保无任何中文字符
     AV.init({
         appId: "FZfmoWWCrfz2C7AesGbQaLGm-MdYxbMMI",
         appKey: "eueAA1VESN9yTAbCxm2Xutus",
@@ -64,20 +40,12 @@
 
     const Capsule = AV.Object.extend('Capsule');
 
-    // 2. 保存函数
     async function saveToCloud() {
         const author = document.getElementById('author').value;
         const content = document.getElementById('content').value;
         const unlockDate = document.getElementById('unlockDate').value;
 
-        if(!author || !content || !unlockDate) {
-            alert("要把信息填完整哦！");
-            return;
-        }
-
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-        btn.innerText = "正在埋入...";
+        if(!author || !content || !unlockDate) return alert("请填完整！");
 
         const newCapsule = new Capsule();
         newCapsule.set('author', author);
@@ -87,18 +55,12 @@
         try {
             await newCapsule.save();
             alert("胶囊已成功埋入云端！");
-            document.getElementById('content').value = '';
-            fetchCapsules();
+            location.reload();
         } catch (error) {
-            console.error(error);
             alert("保存失败: " + error.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "埋下这颗胶囊";
         }
     }
 
-    // 3. 读取函数
     async function fetchCapsules() {
         const list = document.getElementById('capsuleList');
         const query = new AV.Query('Capsule');
@@ -106,14 +68,11 @@
         
         try {
             const results = await query.find();
-            const now = new Date();
-            const today = now.getFullYear() + "-" + 
-                          String(now.getMonth() + 1).padStart(2, '0') + "-" + 
-                          String(now.getDate()).padStart(2, '0');
+            const today = new Date().toISOString().split('T')[0];
+            list.innerHTML = "<h3>时光长廊</h3>";
 
-            list.innerHTML = "";
             if (results.length === 0) {
-                list.innerHTML = "<p style='text-align:center; color:#999;'>还没有记忆，快去写下第一条吧！</p>";
+                list.innerHTML += "<p>还没有记忆哦。</p>";
                 return;
             }
 
@@ -123,22 +82,16 @@
                 const div = document.createElement('div');
                 div.className = 'item';
                 div.innerHTML = `
-                    <div style="margin-bottom: 8px;">
-                        <strong>${data.author}</strong> 
-                        <span style="font-size: 12px; color: #999; float: right;">解锁日: ${data.unlockDate}</span>
-                    </div>
-                    ${isLocked ? 
-                        `<div class="locked-box">🔒 秘密酿造中...等到 ${data.unlockDate} 再来吧</div>` : 
-                        `<div class="content-text">${data.content}</div>`}
+                    <strong>${data.author}</strong> <small>解锁日: ${data.unlockDate}</small>
+                    ${isLocked ? '<div class="locked-box">🔒 还没到解锁时间</div>' : `<p>${data.content}</p>`}
                 `;
                 list.appendChild(div);
             });
         } catch (error) {
-            list.innerHTML = "<p style='text-align:center; color:red;'>加载失败: " + error.message + "</p>";
+            list.innerHTML = "<p style='color:red;'>加载失败: " + error.message + "</p>";
         }
     }
 
-    document.getElementById('submitBtn').addEventListener('click', saveToCloud);
     fetchCapsules();
 </script>
 </body>
